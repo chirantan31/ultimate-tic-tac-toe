@@ -150,6 +150,10 @@ class ultimateTicTacToe:
                     return True
         return False
         
+    def getNextBoard(self, move, lb):
+        return self.globalIdx.index(((move[0] - lb[0])*3,(move[1] - lb[1])*3))
+        
+        
     def evaluatePredifined(self, isMax):
         """
         This function implements the evaluation function for ultimate tic tac toe for predifined agent.
@@ -252,7 +256,7 @@ class ultimateTicTacToe:
                     if board[i][j] == '_':
                         b = deepcopy(board)
                         b[i][j] = self.maxPlayer if isMax else self.minPlayer
-                        nextBoardIdx = self.globalIdx.index(((i - lb[0])*3,(j - lb[1])*3))
+                        nextBoardIdx = self.getNextBoard((i,j), lb)
                         s = self.minimaxBoard(b, depth + 1, nextBoardIdx,not isMax, moves + [(i,j)])
                         scores.append(s)
             if isMax:
@@ -276,7 +280,7 @@ class ultimateTicTacToe:
                     if board[i][j] == '_':
                         b = deepcopy(board)
                         b[i][j] = self.maxPlayer if isMax else self.minPlayer
-                        nextBoardIdx = self.globalIdx.index(((i - lb[0])*3,(j - lb[1])*3))
+                        nextBoardIdx = self.getNextBoard((i,j), lb)
                         s = self.alphaBetaBoard(b, depth + 1, nextBoardIdx, alpha, beta, not isMax, moves + [(i,j)])
                         scores.append(s)
                         if isMax:
@@ -325,69 +329,30 @@ class ultimateTicTacToe:
                 lb = self.globalIdx[nextBoardIdx]
                 if isMinimaxOffensive:
                     v = self.minimaxBoard(self.board, 0, nextBoardIdx, True, [])
-                    best_move, best_val = v[1][0], v[0]
-                    # max_scores = []
-                    # for i in range(lb[0], lb[0] + 3):
-                        # for j in range(lb[1], lb[1] + 3):
-                            # # Check its a valid slot
-                            # if self.board[i][j] == '_':
-                                # b = deepcopy(self.board)
-                                # b[i][j] = self.maxPlayer
-                                # temp_nextBoardIdx = self.globalIdx.index(((i - lb[0])*3,(j - lb[1])*3))
-                                # maxValue = self.minimaxBoard(b, 1, temp_nextBoardIdx, False)
-                                # max_scores.append(((i,j), maxValue))
-                            
-                    # best_move, best_val = max(max_scores, key=lambda x:x[1])
-                    
                 else:
                     v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, True, [])
-                    # for i in range(lb[0], lb[0] + 3):
-                        # for j in range(lb[1], lb[1] + 3):
-                            # #Check its a valid slot
-                            # if self.board[i][j] == '_':
-                                # b = deepcopy(self.board)
-                                # b[i][j] = self.maxPlayer
-                                # temp_nextBoardIdx = self.globalIdx.index(((i - lb[0])*3,(j - lb[1])*3))
-                                # action_val = self.alphaBetaBoard(self.board, 1, temp_nextBoardIdx, -sys.maxsize, sys.maxsize, False)
-                                # if v == action_val:
-                                    # best_move = (i,j)
-                                    # best_val = action_val
-                                    # break
-                        # if v == action_val:
-                            # break
-                    best_move, best_val = v[1][0], v[0]
                     
+                best_move, best_val = v[1][0], v[0]
                 self.board[best_move[0]][best_move[1]] = self.maxPlayer
-                print("1:", best_move, lb, nextBoardIdx, best_val)
-                nextBoardIdx = self.globalIdx.index(((best_move[0] - lb[0])*3,(best_move[1] - lb[1])*3))
-                bestMove.append(best_move)
-                bestValue.append(best_val)
-                gameBoards.append(deepcopy(self.board))
+                
+                #print("1:", best_move, lb, nextBoardIdx, best_val)
+                nextBoardIdx = self.getNextBoard(best_move, lb)
+                bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
             
             maxFirst = True
             
             lb = self.globalIdx[nextBoardIdx]
-            v = self.minimaxBoard(self.board, 0, nextBoardIdx, False, [])
+            if isMinimaxDefensive:
+                v = self.minimaxBoard(self.board, 0, nextBoardIdx, False, [])
+            else:
+                v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, False, [])
+                
             best_move, best_val = v[1][0], v[0]
-            # min_scores = []
-            # for i in range(lb[0], lb[0] + 3):
-                # for j in range(lb[1], lb[1] + 3):
-                    # # Check its a valid slot
-                    # if self.board[i][j] == '_':
-                        # b = deepcopy(self.board)
-                        # b[i][j] = self.minPlayer
-                        # temp_nextBoardIdx = self.globalIdx.index(((i - lb[0])*3,(j - lb[1])*3))
-                        # minValue = self.minimaxBoard(b, 1, temp_nextBoardIdx, True)
-                        # min_scores.append(((i,j), minValue))
-                        
-            #best_move, best_val = min(min_scores, key=lambda x:x[1])
-            print("2:", best_move, lb, nextBoardIdx, best_val)
             self.board[best_move[0]][best_move[1]] = self.minPlayer
-            nextBoardIdx = self.globalIdx.index(((best_move[0] - lb[0])*3,(best_move[1] - lb[1])*3))
             
-            bestMove.append(best_move)
-            bestValue.append(best_val)
-            gameBoards.append(deepcopy(self.board))
+            #print("2:", best_move, lb, nextBoardIdx, best_val)            
+            nextBoardIdx = self.getNextBoard(best_move, lb)
+            bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
                      
         winner = self.checkWinner()
         expandedNodes = []
@@ -426,16 +391,33 @@ class ultimateTicTacToe:
 if __name__=="__main__":
     uttt=ultimateTicTacToe()
     start = time.process_time()
-    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,False)
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,True)
     print(uttt.startBoardIdx)
     end = time.process_time()
-    print('Minimax', end-start)
-    uttt2=ultimateTicTacToe()
+    print('Minimax-Minimax', end-start)
+    
+    uttt=ultimateTicTacToe()
     start = time.process_time()
-    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt2.playGamePredifinedAgent(False,False,False)
-    print(uttt2.startBoardIdx)
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,False,True)
+    print(uttt.startBoardIdx)
     end = time.process_time()
-    print('Alphabeta', end-start)
+    print('Alphabeta-Minimax', end-start)
+    
+    uttt=ultimateTicTacToe()
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, True, False)
+    print(uttt.startBoardIdx)
+    end = time.process_time()
+    print('Minimax-Alphabeta', end-start)
+    
+    uttt=ultimateTicTacToe()
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, False, False)
+    print(uttt.startBoardIdx)
+    end = time.process_time()
+    print('Alphabeta-Alphabeta', end-start)
+    
+    
     #for b in gameBoards:
         #uttt.printBoard(b)
     
