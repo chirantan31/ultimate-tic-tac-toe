@@ -225,7 +225,7 @@ class ultimateTicTacToe:
         bestValue(float):the bestValue that current player may have
         """
         #YOUR CODE HERE
-        return self.alphaBetaBoard(self.board, depth, currBoardIdx, alpha, beta, isMax)
+        return self.alphaBetaBoard(self.board, depth, currBoardIdx, alpha, beta, isMax, [])[0]
 
     def minimax(self, depth, currBoardIdx, isMax):
         """
@@ -241,7 +241,7 @@ class ultimateTicTacToe:
         bestValue(float):the bestValue that current player may have
         """
         #YOUR CODE HERE
-        return self.minimaxBoard(self.board, depth, currBoardIdx, isMax)                    
+        return self.minimaxBoard(self.board, depth, currBoardIdx, isMax, [])[0]
     
     def minimaxBoard(self, board, depth, currBoardIdx, isMax, moves):
         #YOUR CODE HERE
