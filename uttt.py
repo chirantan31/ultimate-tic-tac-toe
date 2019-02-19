@@ -7,6 +7,44 @@ import sys
 import time
 
 class ultimateTicTacToe:
+
+    board_axis = [
+        #rows
+        [(0,0),(0,1),(0,2)],
+        [(1,0),(1,1),(1,2)],
+        [(2,0),(2,1),(2,2)],
+
+        #cols
+        [(0,0),(1,0),(2,0)],
+        [(0,1),(1,1),(2,1)],
+        [(0,2),(1,2),(2,2)],
+
+        #diagonals
+        [(0,0),(1,1),(2,2)],
+        [(0,2),(1,1),(2,0)]]
+
+    board_corners = [
+        (0,0),(0,2),(0,3),(0,5),(0,6),(0,8),
+        (2,0),(2,2),(2,3),(2,5),(2,6),(2,8),
+        (3,0),(3,2),(3,3),(3,5),(3,6),(3,8),
+        (5,0),(5,2),(5,3),(5,5),(5,6),(5,8),
+        (6,0),(6,2),(6,3),(6,5),(6,6),(6,8),
+        (8,0),(8,2),(8,3),(8,5),(8,6),(8,8)]
+    
+    axis_max_win = 27
+    axis_min_win = 8
+
+    axis_max_pot = 9
+    axis_min_pot = 4
+
+    axis_max_block = 12
+    axis_min_block = 18
+
+    axis_max_solo = 3
+    axis_min_solo = 2
+
+    axis_empty = 1
+
     def __init__(self):
         """
         Initialization of the game.
@@ -60,87 +98,84 @@ class ultimateTicTacToe:
         print('\n'.join([' '.join([str(cell) for cell in row]) for row in board[6:9]])+'\n')
         print(self.ctr)
     
-    def getAxisScores(self, board):
+    def getLocalBoard(self, board, board_idx):
+        local_board = {}
+        local_origin = self.globalIdx[board_idx]
+        for row in range(3):
+            local_board[row] = list()
+            for col in range(3):
+                val = board[local_origin[0] + row][local_origin[1] + col]
+                local_board[row].append(val)
+                local_board[(row,col)] = val
+
+        return local_board
     
-        # A product of 27 implies all X's in a row
-        # A product of 8 implies all O's in a row
-        # A product of 18 implies 2 X's and 1 O's in a row
-        # A product of 12 implies 1 X's and 2 O's in a row
-        # A product of 1 implies all blanks
-        # A product of 9 implies 2 X's
-        # A product of 4 implies 2 O's in a row
-        
-        b = deepcopy(self.board)
-        score = 0
-        for i in range(len(b)):
-            for j in range(len(b[0])):
-                if b[i][j] == self.minPlayer:
-                    b[i][j] = 2
-                elif b[i][j] == self.maxPlayer:
-                    b[i][j] = 3
-                else:
-                    b[i][j] = 1
-        
-        axis_scores = []
-        #YOUR CODE HERE
-        for lb in self.globalIdx:
-            for i in range(lb[0], lb[0] + 3):
-                s = b[i][lb[1]] * b[i][lb[1] + 1] * b[i][lb[1] + 2]
-                axis_scores.append(s)
-            for j in range(lb[1], lb[1] + 3):
-                s = b[lb[0]][j] * b[lb[0] + 1][j] * b[lb[0] + 2][j]
-                axis_scores.append(s)
-            
-            d1 = b[lb[0]][lb[1]] * b[lb[0] + 1][lb[1] + 1] * b[lb[0] + 2][lb[1] + 2]
-            axis_scores.append(d1)
-            d2 = b[lb[0]][lb[1] + 2] * b[lb[0] + 1][lb[1] + 1] * b[lb[0] + 2][lb[1] + 0]
-            axis_scores.append(d2)
-        
-        
-        return Counter(axis_scores)
-        
+    def getBoardAxis(self,board):
+        output = []
+        for board_idx in range(9):
+            local_board = self.getLocalBoard(board, board_idx)
+            # print(local_board)
+            for axis in self.board_axis:
+                product = 1
+                for pos in axis:
+                    if local_board[pos] == self.maxPlayer:
+                        product *= 3
+                    elif local_board[pos] == self.minPlayer:
+                        product *= 2
+                output.append(product)
+        return Counter(output)
         
     def utilityFunction(self, board, isMax):    
-        axis_scores = self.getAxisScores(board)
-        score = 0
-        if isMax:
-            if 27 in axis_scores:
-                #Victory Condition
-                score+=10000
-            else:
-                if 9 in axis_scores:
-                    score+=(axis_scores[9]*500)
-                if 12 in axis_scores:
-                    score+=(axis_scores[12]*100)
-        else:
-            if 8 in axis_scores:
-                #Victory Condition
-                score-=10000
-            else:
-                if 4 in axis_scores:
-                    score-=(axis_scores[4]*100)
-                if 18 in axis_scores:
-                    score-=(axis_scores[18]*500)
         
-        #Third rule
-        corner_element = self.maxPlayer if isMax else self.minPlayer
-        corner_score = 0
-        b = board
-        if score == 0:
-            for lb in self.globalIdx:
-                if b[lb[0]][lb[1]] == corner_element:
-                    corner_score+=30
-                if b[lb[0] + 2][lb[1]] == corner_element:
-                    corner_score+=30
-                if b[lb[0]][lb[1] + 2] == corner_element:
-                    corner_score+=30
-                if b[lb[0] + 2][lb[1] + 2] == corner_element:
-                    corner_score+=30
         if isMax:
-            score+=corner_score
+
+            axis = self.getBoardAxis(board)
+
+            # rule 1
+            if self.axis_max_win in axis:
+                return self.winnerMaxUtility
+
+            # rule 2
+            elif self.axis_max_pot in axis or self.axis_max_block in axis:
+                score = 0
+                if self.axis_max_pot in axis:
+                    score += axis[self.axis_max_pot]*self.twoInARowMaxUtility
+                if self.axis_max_block in axis:
+                    score += axis[self.axis_max_block]*self.preventThreeInARowMaxUtility
+                return score
+
+            # rule 3
+            else:
+                score = 0
+                for corner in self.board_corners:
+                    if board[corner[0]][corner[1]] == self.maxPlayer:
+                        score += self.cornerMaxUtility
+                return score
+
         else:
-            score-=corner_score
-        return score
+
+            axis = self.getBoardAxis(board)
+
+            # rule 1
+            if self.axis_min_win in axis:
+                return self.winnerMinUtility
+
+            # rule 2
+            elif self.axis_min_pot in axis or self.axis_min_block in axis:
+                score = 0
+                if self.axis_min_pot in axis:
+                    score += axis[self.axis_min_pot]*self.twoInARowMinUtility
+                if self.axis_min_block in axis:
+                    score += axis[self.axis_min_block]*self.preventThreeInARowMinUtility
+                return score
+
+            # rule 3
+            else:
+                score = 0
+                for corner in self.board_corners:
+                    if board[corner[0]][corner[1]] == self.maxPlayer:
+                        score += self.cornerMinUtility
+                return score
         
     def localBoardHasMovesLeft(self, board, lb):
         
@@ -194,7 +229,6 @@ class ultimateTicTacToe:
             if self.localBoardHasMovesLeft(self.board, lb):
                 return True
                 
-
     def checkWinner(self):
         #Return termimnal node status for maximizer player 1-win,0-tie,-1-lose
         """
@@ -204,7 +238,7 @@ class ultimateTicTacToe:
                      Return 1 if maxPlayer is the winner.
                      Return -1 if miniPlayer is the winner.
         """
-        axis_scores = self.getAxisScores(self.board)
+        axis_scores = self.getBoardAxis(self.board)
         if 27 in axis_scores:
             return 1
         elif 8 in axis_scores:
@@ -392,6 +426,12 @@ if __name__=="__main__":
     uttt=ultimateTicTacToe()
     start = time.process_time()
     gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,True)
+    if winner == 1:
+        print("The winner is maxPlayer!!!")
+    elif winner == -1:
+        print("The winner is minPlayer!!!")
+    else:
+        print("Tie. No winner:(")
     print(uttt.startBoardIdx)
     end = time.process_time()
     print('Minimax-Minimax', end-start)
@@ -399,6 +439,12 @@ if __name__=="__main__":
     uttt=ultimateTicTacToe()
     start = time.process_time()
     gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,False,True)
+    if winner == 1:
+        print("The winner is maxPlayer!!!")
+    elif winner == -1:
+        print("The winner is minPlayer!!!")
+    else:
+        print("Tie. No winner:(")
     print(uttt.startBoardIdx)
     end = time.process_time()
     print('Alphabeta-Minimax', end-start)
@@ -406,6 +452,12 @@ if __name__=="__main__":
     uttt=ultimateTicTacToe()
     start = time.process_time()
     gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, True, False)
+    if winner == 1:
+        print("The winner is maxPlayer!!!")
+    elif winner == -1:
+        print("The winner is minPlayer!!!")
+    else:
+        print("Tie. No winner:(")
     print(uttt.startBoardIdx)
     end = time.process_time()
     print('Minimax-Alphabeta', end-start)
@@ -413,6 +465,12 @@ if __name__=="__main__":
     uttt=ultimateTicTacToe()
     start = time.process_time()
     gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, False, False)
+    if winner == 1:
+        print("The winner is maxPlayer!!!")
+    elif winner == -1:
+        print("The winner is minPlayer!!!")
+    else:
+        print("Tie. No winner:(")
     print(uttt.startBoardIdx)
     end = time.process_time()
     print('Alphabeta-Alphabeta', end-start)
@@ -424,9 +482,9 @@ if __name__=="__main__":
     #print(bestMove, bestValue)
     #print('Winner', winner)
     
-    if winner == 1:
-        print("The winner is maxPlayer!!!")
-    elif winner == -1:
-        print("The winner is minPlayer!!!")
-    else:
-        print("Tie. No winner:(")
+    # if winner == 1:
+    #     print("The winner is maxPlayer!!!")
+    # elif winner == -1:
+    #     print("The winner is minPlayer!!!")
+    # else:
+    #     print("Tie. No winner:(")
