@@ -142,6 +142,9 @@ class ultimateTicTacToe:
             score-=corner_score
         return score
         
+    def customUtilityFunction(self, board, isMax):
+        return 0
+    
     def localBoardHasMovesLeft(self, board, lb):
         
         for i in range(lb[0], lb[0] + 3):
@@ -243,7 +246,7 @@ class ultimateTicTacToe:
         #YOUR CODE HERE
         return self.minimaxBoard(self.board, depth, currBoardIdx, isMax, [])[0]
     
-    def minimaxBoard(self, board, depth, currBoardIdx, isMax, moves):
+    def minimaxBoard(self, board, depth, currBoardIdx, isMax, moves, predef):
         #YOUR CODE HERE
         bestValue=0.0
         scores = []
@@ -257,17 +260,21 @@ class ultimateTicTacToe:
                         b = deepcopy(board)
                         b[i][j] = self.maxPlayer if isMax else self.minPlayer
                         nextBoardIdx = self.getNextBoard((i,j), lb)
-                        s = self.minimaxBoard(b, depth + 1, nextBoardIdx,not isMax, moves + [(i,j)])
+                        s = self.minimaxBoard(b, depth + 1, nextBoardIdx,not isMax, moves + [(i,j)], predef)
                         scores.append(s)
             if isMax:
                 return max(scores, key=lambda x:x[0])
             else:
                 return min(scores, key=lambda x:x[0])
         else:            
-            return self.utilityFunction(board, isMax), moves
+            if predef:
+                return self.utilityFunction(board, isMax), moves
+            else:
+                return self.customUtilityFunction(board, isMax), moves
+                
         
     
-    def alphaBetaBoard(self, board, depth, currBoardIdx, alpha, beta, isMax, moves):
+    def alphaBetaBoard(self, board, depth, currBoardIdx, alpha, beta, isMax, moves, predef):
         #YOUR CODE HERE
         bestValue=0.0
         scores = []
@@ -281,7 +288,7 @@ class ultimateTicTacToe:
                         b = deepcopy(board)
                         b[i][j] = self.maxPlayer if isMax else self.minPlayer
                         nextBoardIdx = self.getNextBoard((i,j), lb)
-                        s = self.alphaBetaBoard(b, depth + 1, nextBoardIdx, alpha, beta, not isMax, moves + [(i,j)])
+                        s = self.alphaBetaBoard(b, depth + 1, nextBoardIdx, alpha, beta, not isMax, moves + [(i,j)], predef)
                         scores.append(s)
                         if isMax:
                             v = max(scores, key=lambda x:x[0])
@@ -295,9 +302,10 @@ class ultimateTicTacToe:
                             beta = min(beta, v[0])
             return v
         else:            
-            #self.printBoard(board)
-            #self.ctr+=1
-            return self.utilityFunction(board, isMax), moves
+            if predef:
+                return self.utilityFunction(board, isMax), moves
+            else:
+                return self.customUtilityFunction(board, isMax), moves
     
     def playGamePredifinedAgent(self,maxFirst,isMinimaxOffensive,isMinimaxDefensive):
         """
@@ -328,9 +336,9 @@ class ultimateTicTacToe:
             if maxFirst:
                 lb = self.globalIdx[nextBoardIdx]
                 if isMinimaxOffensive:
-                    v = self.minimaxBoard(self.board, 0, nextBoardIdx, True, [])
+                    v = self.minimaxBoard(self.board, 0, nextBoardIdx, True, [], True)
                 else:
-                    v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, True, [])
+                    v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, True, [], True)
                     
                 best_move, best_val = v[1][0], v[0]
                 self.board[best_move[0]][best_move[1]] = self.maxPlayer
@@ -343,9 +351,9 @@ class ultimateTicTacToe:
             
             lb = self.globalIdx[nextBoardIdx]
             if isMinimaxDefensive:
-                v = self.minimaxBoard(self.board, 0, nextBoardIdx, False, [])
+                v = self.minimaxBoard(self.board, 0, nextBoardIdx, False, [], True)
             else:
-                v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, False, [])
+                v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, False, [], True)
                 
             best_move, best_val = v[1][0], v[0]
             self.board[best_move[0]][best_move[1]] = self.minPlayer
@@ -358,7 +366,7 @@ class ultimateTicTacToe:
         expandedNodes = []
         return gameBoards, bestMove, expandedNodes, bestValue, winner
 
-    def playGameYourAgent(self):
+    def playGameYourAgent(self, predefFirst):
         """
         This function implements the processes of the game of your own agent vs predifined offensive agent.
         input args:
@@ -369,11 +377,39 @@ class ultimateTicTacToe:
         """
         #YOUR CODE HERE
         bestMove=[]
+        bestValue=[]
         gameBoards=[]
-        winner=0
+        
+        nextBoardIdx = self.startBoardIdx
+        while self.checkMovesLeft():
+        
+            if predefFirst:
+                lb = self.globalIdx[nextBoardIdx]
+                v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, True, [], True)
+                    
+                best_move, best_val = v[1][0], v[0]
+                self.board[best_move[0]][best_move[1]] = self.maxPlayer
+                
+                #print("1:", best_move, lb, nextBoardIdx, best_val)
+                nextBoardIdx = self.getNextBoard(best_move, lb)
+                bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
+            
+            predefFirst = True
+            
+            lb = self.globalIdx[nextBoardIdx]
+            v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, False, [], False)
+                
+            best_move, best_val = v[1][0], v[0]
+            self.board[best_move[0]][best_move[1]] = self.minPlayer
+            
+            #print("2:", best_move, lb, nextBoardIdx, best_val)
+            nextBoardIdx = self.getNextBoard(best_move, lb)
+            bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
+                     
+        winner = self.checkWinner()
+        expandedNodes = []
         return gameBoards, bestMove, winner
-
-
+        
     def playGameHuman(self):
         """
         This function implements the processes of the game of your own agent vs a human.
@@ -390,10 +426,11 @@ class ultimateTicTacToe:
 
 if __name__=="__main__":
     uttt=ultimateTicTacToe()
+    
     start = time.process_time()
     gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,True)
-    print(uttt.startBoardIdx)
     end = time.process_time()
+    uttt.printGameBoard()
     print('Minimax-Minimax', end-start)
     
     uttt=ultimateTicTacToe()
@@ -416,6 +453,19 @@ if __name__=="__main__":
     print(uttt.startBoardIdx)
     end = time.process_time()
     print('Alphabeta-Alphabeta', end-start)
+    
+    
+    for i in range(10):
+        startIndex = randint(0,8)
+        startPlayer = randint(0,1)
+        maxFirst = True if startPlayer == 0 else False
+        uttt=ultimateTicTacToe()
+        uttt.startBoardIdx = startIndex
+        start = time.process_time()
+        gameBoards, bestMove, winner=uttt.playGameYourAgent(maxFirst)
+        print(uttt.startBoardIdx)
+        end = time.process_time()
+        print('Alphabeta-Alphabeta', end-start)
     
     
     #for b in gameBoards:
