@@ -242,19 +242,16 @@ class ultimateTicTacToe:
             # rule 1
             if self.axis_min_win in axis:
                 return -10000
+            elif self.axis_max_win in axis:
+                return +100000
 
             score = 0
             for boardAxis in axisData:
                 if self.axis_min_pot in boardAxis:
-                    score -= 100
+                    score -= 500
                 if self.axis_max_pot in boardAxis:
-                    score += 90
-
-            for boardAxis in axisData:
-                if len(set(boardAxis) - self.axis_not_min_only):
-                    score -= 50
-                if len(set(boardAxis) - self.axis_not_max_only):
-                    score += 25
+                    score += 500
+                    
             return score
 
     def checkMovesLeft(self):
@@ -313,7 +310,7 @@ class ultimateTicTacToe:
         
         maxTurn = isMax != bool(depth % 2 != 0)
 
-        if depth < self.maxDepth:
+        if depth < self.maxDepth and self.checkMovesLeft():
 
             local_board = self.getLocalBoard(currBoardIdx)
 
@@ -381,13 +378,13 @@ class ultimateTicTacToe:
         bestValue(float):the bestValue that current player may have
         """
 
-        return self.minimaxBestMove(depth, currBoardIdx, isMax)
+        return self.minimaxBestMove(depth, currBoardIdx, isMax)[0]
 
     def minimaxBestMove(self, depth, currBoardIdx, isMax):
 
         maxTurn = isMax != bool(depth % 2 != 0)
 
-        if depth < self.maxDepth:
+        if depth < self.maxDepth and self.checkMovesLeft():
 
             local_board = self.getLocalBoard(currBoardIdx)
 
@@ -531,7 +528,38 @@ class ultimateTicTacToe:
         return gameBoards, bestMove, self.checkWinner()
 
 
+
+    def getHumanMove(self):
+
+        offset = self.globalIdx[self.currBoardIdx]
+        print("")
+        for row in range(9):
+            print("++---+---+---++---+---+---++---+---+---++")
+            if row % 3 == 0  and row != 0:
+                print("++---+---+---++---+---+---++---+---+---++")
+            row_str = "|"
+            for col in range(9):
+                if col % 3 == 0:
+                    row_str += "|"
+                if row >= offset[0] and row < offset[0] + 3 and col >= offset[1] and col < offset[1] + 3:
+                    if self.board[row][col] == "_":
+                        row_str += " " + str((row % 3) * 3 + col % 3) + " |"
+                    else:
+                        row_str += " " + self.board[row][col] + " |"
+                else:
+                    row_str += " " + self.board[row][col] + " |"
+            row_str += "|"
+            print(row_str)
+        print("++---+---+---++---+---+---++---+---+---++")
+        playerMove = 9
+        while playerMove < 0 or playerMove > 8:
+            playerMove = int(input("Enter Your Move: "))
+            print("+---------------------------------------+")
+        
+        return (playerMove // 3, playerMove % 3)
+
     def playGameHuman(self):
+
         """
         This function implements the processes of the game of your own agent vs a human.
         output:
@@ -539,6 +567,46 @@ class ultimateTicTacToe:
         gameBoards(list of 2d lists): list of game board positions at each move
         winner(int): 1 for maxPlayer is the winner, -1 for minPlayer is the winner, and 0 for tie.
         """
+
+        bestMove=[]
+        gameBoards=[]
+        
+        maxTurn = bool(randint(0,1) == 1)
+
+        self.startBoardIdx = randint(0,8)
+
+        self.currBoardIdx = self.startBoardIdx
+
+        while self.checkMovesLeft():
+
+            if maxTurn:
+
+                offset = self.globalIdx[self.currBoardIdx]
+
+                move = self.getHumanMove()
+
+                self.currBoardIdx = self.posToLocalBoardIdx(move[0],move[1])
+
+                move = (offset[0] + move[0], offset[1] + move[1])
+
+            else:
+                offset = self.globalIdx[self.currBoardIdx]
+
+                (val, move) = self.alphabetaBestMove(0, self.currBoardIdx, float("-inf"),float("inf"), maxTurn, self.evaluateDesigned)
+
+                self.currBoardIdx = self.posToLocalBoardIdx(move[0],move[1])
+
+                move = (offset[0] + move[0], offset[1] + move[1])
+
+                bestMove.append(move)
+
+            self.board[move[0]][move[1]] = self.maxPlayer if maxTurn else self.minPlayer
+            
+            gameBoards.append(self.board)
+
+            maxTurn = not maxTurn
+
+        return gameBoards, bestMove, self.checkWinner()
 
 if __name__=="__main__":
     uttt=ultimateTicTacToe()
@@ -593,3 +661,12 @@ if __name__=="__main__":
         print("----------------------------------------------")
         sum += winner
     print(f"Sum: {sum} (Lower is better)")
+
+    uttt=ultimateTicTacToe()
+    gameBoards, bestMove, winner = uttt.playGameHuman()
+    if winner == 1:
+        print("You Win!!!")
+    elif winner == -1:
+        print("You Lost!!!")
+    else:
+        print("Tie. No winner:(")
