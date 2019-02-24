@@ -143,6 +143,7 @@ class ultimateTicTacToe:
         return score
         
     def customUtilityFunction(self, board):
+        #Custom player is always minPlayer
         axis_scores = self.getAxisScores(board)
         score = 0
         
@@ -173,21 +174,24 @@ class ultimateTicTacToe:
                 num_corner = 0
                 if b[lb[0]][lb[1]] == corner_element:
                     corner_score-=30
-                    num_corner+=1
                 if b[lb[0] + 2][lb[1]] == corner_element:
                     corner_score-=30
-                    num_corner+=1
                 if b[lb[0]][lb[1] + 2] == corner_element:
                     corner_score-=30
-                    num_corner+=1
                 if b[lb[0] + 2][lb[1] + 2] == corner_element:
                     corner_score-=30
-                    num_corner+=1
-                # if num_corner == 2:
-                    # score-=100
-                # if num_corner == 3:
-                    # score-=200
-                #print(num_corner)
+                
+            for lb in self.globalIdx:
+                num_corner = 0
+                if b[lb[0]][lb[1]] == self.maxPlayer:
+                    corner_score+=30
+                if b[lb[0] + 2][lb[1]] == self.maxPlayer:
+                    corner_score+=30
+                if b[lb[0]][lb[1] + 2] == self.maxPlayer:
+                    corner_score+=30
+                if b[lb[0] + 2][lb[1] + 2] == self.maxPlayer:
+                    corner_score+=30
+                
         score+=corner_score
         return score
     
@@ -224,10 +228,9 @@ class ultimateTicTacToe:
         score(float): estimated utility score for maxPlayer or minPlayer
         """
         #YOUR CODE HERE
-            
+        # isMax isn't used
         
-        score=0
-        return score
+        return customUtilityFunction(self.board)
 
     def checkMovesLeft(self):
         """
@@ -237,13 +240,11 @@ class ultimateTicTacToe:
                         on the board.
         """
         #YOUR CODE HERE
-        if self.checkWinner() != 0:
-            return False
         for lb in self.globalIdx:
             if self.localBoardHasMovesLeft(self.board, lb):
                 return True
+        return False
                 
-
     def checkWinner(self):
         #Return termimnal node status for maximizer player 1-win,0-tie,-1-lose
         """
@@ -274,7 +275,7 @@ class ultimateTicTacToe:
         bestValue(float):the bestValue that current player may have
         """
         #YOUR CODE HERE
-        return self.alphaBetaBoard(self.board, depth, currBoardIdx, alpha, beta, isMax, [])[0]
+        return self.alphaBetaBoard(self.board, depth, currBoardIdx, alpha, beta, isMax, [], True, isMax)[0]
 
     def minimax(self, depth, currBoardIdx, isMax):
         """
@@ -290,7 +291,7 @@ class ultimateTicTacToe:
         bestValue(float):the bestValue that current player may have
         """
         #YOUR CODE HERE
-        return self.minimaxBoard(self.board, depth, currBoardIdx, isMax, [])[0]
+        return self.minimaxBoard(self.board, depth, currBoardIdx, isMax, [], True, isMax)[0]
     
     def minimaxBoard(self, board, depth, currBoardIdx, isMax, moves, predef, isMaxUtility):
         #YOUR CODE HERE
@@ -309,25 +310,18 @@ class ultimateTicTacToe:
                         s = self.minimaxBoard(b, depth + 1, temp_nextBoardIdx,not isMax, moves + [(i,j)], predef, isMaxUtility)
                         scores.append(s)
 
-            #Needed?
-            #if len(scores) > 0:
-            if isMax:
-                t = max(scores, key=lambda x:x[0])
-                #self.printBoard(board)
-                #print(depth, t, isMax, scores)
-                return t
+            if len(scores) > 0:
+                if isMax:
+                    t = max(scores, key=lambda x:x[0])
+                    return t
+                else:
+                    t = min(scores, key=lambda x:x[0])
+                    return t
             else:
-                t = min(scores, key=lambda x:x[0])
-                #self.printBoard(board)
-                #print(depth, t, isMax, scores)
-                return t
-            #else:
-            #return self.utilityFunction(board, isMaxUtility), (0,0)
+                return self.utilityFunction(board, isMaxUtility), (0,0)
         else:            
             if predef:
                 uf = self.utilityFunction(board, isMaxUtility), moves
-                #print(depth, uf, isMax)
-                #self.printBoard(board)
                 return uf
             else:
                 return self.customUtilityFunction(board, isMaxUtility), moves
@@ -389,29 +383,26 @@ class ultimateTicTacToe:
         
         nextBoardIdx = self.startBoardIdx
         while self.checkMovesLeft():
-        
+            if not self.checkMovesLeft() or self.checkWinner()==1 or self.checkWinner()==-1:
+                break
             if maxFirst:
                 lb = self.globalIdx[nextBoardIdx]
                 if isMinimaxOffensive:
-                    print('minimax,offensive')
                     v = self.minimaxBoard(self.board, 0, nextBoardIdx, True, [], True, True)
                 else:
                     v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, True, [], True, True)
                     
-                #print(v)
                 best_move, best_val = v[1][0], v[0]
                 self.board[best_move[0]][best_move[1]] = self.maxPlayer
                 
-                #print("1:", best_move, lb, nextBoardIdx, best_val)
                 nextBoardIdx = self.getNextBoard(best_move, lb)
                 bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
-                #print(nextBoardIdx, best_move, lb, best_val)
-                #self.printBoard(self.board)
+                
             maxFirst = True
-            
+            if not self.checkMovesLeft() or self.checkWinner()==1 or self.checkWinner()==-1:
+                break
             lb = self.globalIdx[nextBoardIdx]
             if isMinimaxDefensive:
-                print('minimax,defensive')
                 v = self.minimaxBoard(self.board, 0, nextBoardIdx, False, [], True, False)
             else:
                 v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, False, [], True, False)
@@ -419,16 +410,14 @@ class ultimateTicTacToe:
             best_move, best_val = v[1][0], v[0]
             self.board[best_move[0]][best_move[1]] = self.minPlayer
             
-            #print("2:", best_move, lb, nextBoardIdx, best_val)            
             nextBoardIdx = self.getNextBoard(best_move, lb)
             bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
-            #print(nextBoardIdx, best_move, lb, best_val)
-            #self.printBoard(self.board)
+            
         winner = self.checkWinner()
         expandedNodes = []
         return gameBoards, bestMove, expandedNodes, bestValue, winner
 
-    def playGameYourAgent(self, maxFirst):
+    def playGameYourAgent(self):
         """
         This function implements the processes of the game of your own agent vs predifined offensive agent.
         input args:
@@ -438,50 +427,78 @@ class ultimateTicTacToe:
         winner(int): 1 for maxPlayer is the winner, -1 for minPlayer is the winner, and 0 for tie.
         """
         #YOUR CODE HERE
-        #YOUR CODE HERE
-        # For now max always plays first
         bestMove=[]
         bestValue=[]
         gameBoards=[]
+        maxFirst = bool(randint(0,1) == 1)
         
         nextBoardIdx = self.startBoardIdx
         while self.checkMovesLeft():
-        
+            if not self.checkMovesLeft() or self.checkWinner()==1 or self.checkWinner()==-1:
+                break
+                
             if maxFirst:
                 lb = self.globalIdx[nextBoardIdx]
                 v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, True, [], True, True)
-                
-                #print(v)
                 best_move, best_val = v[1][0], v[0]
                 self.board[best_move[0]][best_move[1]] = self.maxPlayer
                 
-                #print("1:", best_move, lb, nextBoardIdx, best_val)
                 nextBoardIdx = self.getNextBoard(best_move, lb)
                 bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
-                #print(nextBoardIdx, best_move, lb, best_val)
-                #self.printBoard(self.board)
                 
-            if not self.checkMovesLeft():
+            if not self.checkMovesLeft() or self.checkWinner()==1 or self.checkWinner()==-1:
                 break
+                
             maxFirst = True
             
             lb = self.globalIdx[nextBoardIdx]
-            #v = self.minimaxBoard(self.board, 0, nextBoardIdx, False, [], False, False)
             v = self.alphaBetaBoard(self.board, -1, nextBoardIdx, -sys.maxsize, sys.maxsize, False, [], False, False)
                 
             best_move, best_val = v[1][0], v[0]
             self.board[best_move[0]][best_move[1]] = self.minPlayer
             
-            #print("2:", best_move, lb, nextBoardIdx, best_val)            
             nextBoardIdx = self.getNextBoard(best_move, lb)
             bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
-            #print(nextBoardIdx, best_move, lb, best_val)
-            #self.printBoard(self.board)
+            
         winner = self.checkWinner()
         expandedNodes = []
         return gameBoards, bestMove, winner
         
-    def playGameHuman(self, maxFirst):
+        
+    def getHumanMove(self, currBoardIdx):
+        offset = self.globalIdx[currBoardIdx]
+        print("")
+        for row in range(9):
+            print("++---+---+---++---+---+---++---+---+---++")
+            if row % 3 == 0  and row != 0:
+                print("++---+---+---++---+---+---++---+---+---++")
+            row_str = "|"
+            for col in range(9):
+                if col % 3 == 0:
+                    row_str += "|"
+                if row >= offset[0] and row < offset[0] + 3 and col >= offset[1] and col < offset[1] + 3:
+                    if self.board[row][col] == "_":
+                        row_str += " " + str((row % 3) * 3 + col % 3) + " |"
+                    else:
+                        row_str += " " + self.board[row][col] + " |"
+                else:
+                    row_str += " " + self.board[row][col] + " |"
+            row_str += "|"
+            print(row_str)
+        print("++---+---+---++---+---+---++---+---+---++")
+        playerMove = 9
+        while playerMove < 0 or playerMove > 8:
+            playerMove = int(input("Enter Your Move: "))
+            print("+---------------------------------------+")
+        if playerMove >= 0 and playerMove < 3:
+            return offset[0], offset[1] + playerMove
+        elif playerMove >= 3 and playerMove < 6:
+            return offset[0]+1, offset[1] + playerMove%3
+        elif playerMove >= 6 and playerMove < 9:
+            return offset[0]+2, offset[1] + playerMove%3
+        
+        
+    def playGameHuman(self):
         """
         This function implements the processes of the game of your own agent vs a human.
         output:
@@ -492,9 +509,11 @@ class ultimateTicTacToe:
         bestMove=[]
         bestValue=[]
         gameBoards=[]
-        
+        maxFirst = bool(randint(0,1) == 1)
         nextBoardIdx = self.startBoardIdx
         while self.checkMovesLeft():
+            if not self.checkMovesLeft() or self.checkWinner()==1 or self.checkWinner()==-1:
+                break
         
             if maxFirst:
                 lb = self.globalIdx[nextBoardIdx]
@@ -511,13 +530,14 @@ class ultimateTicTacToe:
                 #self.printBoard(self.board)
             maxFirst = True
             
+            if not self.checkMovesLeft() or self.checkWinner()==1 or self.checkWinner()==-1:
+                break
+            
             lb = self.globalIdx[nextBoardIdx]
-            self.printGameBoard()
             print('NextBoardIdx', nextBoardIdx)
                 
-            x = input()
-            y = input()
-            best_move = int(x),int(y)
+            best_move = self.getHumanMove(nextBoardIdx)
+            print(best_move)
             best_val = -1
             self.board[best_move[0]][best_move[1]] = self.minPlayer
             
@@ -532,35 +552,63 @@ class ultimateTicTacToe:
 
 if __name__=="__main__":
 
+    ## BLOCK TO TEST playGamePredifinedAgent
+    
+    # print("Max Starts First")
     # uttt=ultimateTicTacToe()    
     # start = time.process_time()
     # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,True,True)
     # end = time.process_time()
     # uttt.printGameBoard()
     # print('Minimax-Minimax', end-start)
-    #for b in gameBoards:
-    #    uttt.printBoard(b)
     
     # uttt=ultimateTicTacToe()
     # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,False,False)
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,False,True)
     # print(uttt.startBoardIdx)
     # end = time.process_time()
+    # uttt.printGameBoard()
     # print('Alphabeta-Minimax', end-start)
     
     # uttt=ultimateTicTacToe()
     # start = time.process_time()
-    # gameBoards, bestMove, winner=uttt.playGameHuman(True, )
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True, True, False)
     # print(uttt.startBoardIdx)
     # end = time.process_time()
-    # print('Alphabeta-Minimax', end-start)
+    # uttt.printGameBoard()
+    # print('Minimax-Alphabeta', end-start)
     
+    # uttt=ultimateTicTacToe()
+    # start = time.process_time()
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True, False, False)
+    # print(uttt.startBoardIdx)
+    # end = time.process_time()
+    # uttt.printGameBoard()
+    # print('Alphabeta-Alphabeta', end-start)
+    
+    
+    # print("Min Starts First")
+    # uttt=ultimateTicTacToe()    
+    # start = time.process_time()
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,True)
+    # end = time.process_time()
+    # uttt.printGameBoard()
+    # print('Minimax-Minimax', end-start)
+    
+    # uttt=ultimateTicTacToe()
+    # start = time.process_time()
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,False,True)
+    # print(uttt.startBoardIdx)
+    # end = time.process_time()
+    # uttt.printGameBoard()
+    # print('Alphabeta-Minimax', end-start)
     
     # uttt=ultimateTicTacToe()
     # start = time.process_time()
     # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, True, False)
     # print(uttt.startBoardIdx)
     # end = time.process_time()
+    # uttt.printGameBoard()
     # print('Minimax-Alphabeta', end-start)
     
     # uttt=ultimateTicTacToe()
@@ -568,57 +616,18 @@ if __name__=="__main__":
     # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, False, False)
     # print(uttt.startBoardIdx)
     # end = time.process_time()
+    # uttt.printGameBoard()
     # print('Alphabeta-Alphabeta', end-start)
     
-    maxPlayer, custom = 0,0
+    ## BLOCK TO TEST playGameYourAgent
     
-    for i in range(0,8):
-        startIndex = i
-        
-        maxFirst = True
-        uttt=ultimateTicTacToe()
-        uttt.startBoardIdx = startIndex
-        start = time.process_time()
-        gameBoards, bestMove, winner=uttt.playGameYourAgent(maxFirst)
-        print(uttt.startBoardIdx)
-        end = time.process_time()
-        print('Alphabeta-Alphabeta', end-start)
-        uttt.printGameBoard()
-        if winner == 1:
-            print("The winner is maxPlayer!!!")
-            maxPlayer+=1
-        elif winner == -1:
-            print("The winner is custom!!!")
-            custom+=1
-        else:
-            print("Tie. No winner:(")
-        
-        maxFirst = False
-        uttt=ultimateTicTacToe()
-        uttt.startBoardIdx = startIndex
-        start = time.process_time()
-        gameBoards, bestMove, winner=uttt.playGameYourAgent(maxFirst)
-        print(uttt.startBoardIdx)
-        end = time.process_time()
-        print('Alphabeta-Alphabeta', end-start)
-        uttt.printGameBoard()
-        if winner == 1:
-            print("The winner is maxPlayer!!!")
-            maxPlayer+=1
-        elif winner == -1:
-            print("The winner is custom!!!")
-            custom+=1
-        else:
-            print("Tie. No winner:(")
+    # maxPlayer, minPlayer = 0,0    
+    # for i in range(0,20):
     
-    # for i in range(50):
-        # startIndex = randint(0,8)
-        # startPlayer = randint(0,1)
-        # maxFirst = True if startPlayer == 0 else False
         # uttt=ultimateTicTacToe()
-        # uttt.startBoardIdx = startIndex
+        # uttt.startBoardIdx = randint(0,8)
         # start = time.process_time()
-        # gameBoards, bestMove, winner=uttt.playGameYourAgent(maxFirst)
+        # gameBoards, bestMove, winner=uttt.playGameYourAgent()
         # print(uttt.startBoardIdx)
         # end = time.process_time()
         # print('Alphabeta-Alphabeta', end-start)
@@ -627,17 +636,20 @@ if __name__=="__main__":
             # print("The winner is maxPlayer!!!")
             # maxPlayer+=1
         # elif winner == -1:
-            # print("The winner is custom!!!")
-            # custom+=1
+            # print("The winner is minPlayer!!!")
+            # minPlayer+=1
         # else:
             # print("Tie. No winner:(")
     
-    print(maxPlayer, custom, (custom/(custom+maxPlayer)))
+    # percentageWins = ((minPlayer/(minPlayer+maxPlayer))*100)
+    # print('MaxPlayer wins:', maxPlayer, 'MinPlayer wins:', minPlayer, 'MinPlayer percentage wins',percentageWins)
     
-    #for b in gameBoards:
-        #uttt.printBoard(b)
-    
-    #print(bestMove, bestValue)
-    #print('Winner', winner)
-    
-    
+    ## BLOCK TO TEST playGameHuman
+    # uttt=ultimateTicTacToe()
+    # gameBoards, bestMove, winner = uttt.playGameHuman()
+    # if winner == 1:
+        # print("You Lost!!!")
+    # elif winner == -1:
+        # print("You Won!!!")
+    # else:
+        # print("Tie. No winner:(")
