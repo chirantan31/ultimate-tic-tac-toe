@@ -131,8 +131,6 @@ class ultimateTicTacToe:
         for spot_idx in range(9):
             count = 0
             for board_idx in range(9):
-                if board_idx == spot_idx:
-                    continue
                 if self.board[(board_idx // 3) * 3 + (spot_idx // 3)][(board_idx % 3) * 3 + (spot_idx % 3)] == "_":
                     count += 1
             output.append(count)
@@ -365,7 +363,7 @@ class ultimateTicTacToe:
                         else:
                             if new_score <= alpha:
                                 return score_entry
-                            elif new_score > beta:
+                            elif new_score < beta:
                                 beta = new_score
 
                         scores.append(score_entry)
@@ -639,26 +637,11 @@ class ultimateTicTacToe:
         return gameBoards, bestMove, self.checkWinner()
 
 if __name__=="__main__":
-    uttt=ultimateTicTacToe()
-    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,False,False)
-    print("--------------------------------")
-    print("\tAlphaBeta vs. AlphaBeta")
-    print("\tMax First")
-    print("--------------------------------")
-    print("Expanded Nodes: " + str(expandedNodes))
-    print("Expanded Nodes: " + str(bestValue))
-    if winner == 1:
-        print("The winner is maxPlayer!!!")
-    elif winner == -1:
-        print("The winner is minPlayer!!!")
-    else:
-        print("Tie. No winner:(")
-    uttt.printGameBoard()
 
     uttt=ultimateTicTacToe()
-    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,False,True)
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,True,True)
     print("--------------------------------")
-    print("\tAlphaBeta vs. Minimax")
+    print("\tMinimax vs. Minimax")
     print("\tMax First")
     print("--------------------------------")
     print("Expanded Nodes: " + str(expandedNodes))
@@ -688,10 +671,10 @@ if __name__=="__main__":
     uttt.printGameBoard()
 
     uttt=ultimateTicTacToe()
-    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,True,True)
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,False,True)
     print("--------------------------------")
-    print("\tMinimax vs. Minimax")
-    print("\tMax First")
+    print("\tAlphaBeta vs. Minimax")
+    print("\tMin First")
     print("--------------------------------")
     print("Expanded Nodes: " + str(expandedNodes))
     print("Expanded Nodes: " + str(bestValue))
@@ -719,67 +702,92 @@ if __name__=="__main__":
         print("Tie. No winner:(")
     uttt.printGameBoard()
 
-    uttt=ultimateTicTacToe()
-    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,False,True)
-    print("--------------------------------")
-    print("\tAlphaBeta vs. Minimax")
-    print("\tMin First")
-    print("--------------------------------")
-    print("Expanded Nodes: " + str(expandedNodes))
-    print("Expanded Nodes: " + str(bestValue))
-    if winner == 1:
-        print("The winner is maxPlayer!!!")
-    elif winner == -1:
-        print("The winner is minPlayer!!!")
-    else:
-        print("Tie. No winner:(")
-    uttt.printGameBoard()
-
-    uttt=ultimateTicTacToe()
-    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,False)
-    print("--------------------------------")
-    print("\tMinimax vs. AlphaBeta")
-    print("\tMin First")
-    print("--------------------------------")
-    print("Expanded Nodes: " + str(expandedNodes))
-    print("Expanded Nodes: " + str(bestValue))
-    if winner == 1:
-        print("The winner is maxPlayer!!!")
-    elif winner == -1:
-        print("The winner is minPlayer!!!")
-    else:
-        print("Tie. No winner:(")
-    uttt.printGameBoard()
-
-    uttt=ultimateTicTacToe()
-    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,True)
-    print("--------------------------------")
-    print("\tMinimax vs. Minimax")
-    print("\tMin First")
-    print("--------------------------------")
-    print("Expanded Nodes: " + str(expandedNodes))
-    print("Expanded Nodes: " + str(bestValue))
-    if winner == 1:
-        print("The winner is maxPlayer!!!")
-    elif winner == -1:
-        print("The winner is minPlayer!!!")
-    else:
-        print("Tie. No winner:(")
-    uttt.printGameBoard()
-
     sum = 0
     for i in range(2):
         for j in range(9):
             uttt=ultimateTicTacToe()
             gameBoards, bestMove, winner = uttt.playGameYourAgent(True if i == 1 else False, j)
             sum += winner
+            print("--------------------------------")
+            uttt.printGameBoard()
+    print("--------------------------------")
     print(f"Defined Agent Win Percentage: {(18.0 - sum)/2.0/18.0*100}%")
+    print("--------------------------------")
 
     uttt=ultimateTicTacToe()
     gameBoards, bestMove, winner = uttt.playGameHuman()
+    uttt.printGameBoard()
     if winner == 1:
         print("You Win!!!")
     elif winner == -1:
         print("You Lost!!!")
     else:
         print("Tie. No winner:(")
+
+
+
+            # uttt=ultimateTicTacToe()
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,False,False)
+    # print("--------------------------------")
+    # print("\tAlphaBeta vs. AlphaBeta")
+    # print("\tMax First")
+    # print("--------------------------------")
+    # print("Expanded Nodes: " + str(expandedNodes))
+    # print("Expanded Nodes: " + str(bestValue))
+    # if winner == 1:
+    #     print("The winner is maxPlayer!!!")
+    # elif winner == -1:
+    #     print("The winner is minPlayer!!!")
+    # else:
+    #     print("Tie. No winner:(")
+    # uttt.printGameBoard()
+
+    # uttt=ultimateTicTacToe()
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,False,True)
+    # print("--------------------------------")
+    # print("\tAlphaBeta vs. Minimax")
+    # print("\tMax First")
+    # print("--------------------------------")
+    # print("Expanded Nodes: " + str(expandedNodes))
+    # print("Expanded Nodes: " + str(bestValue))
+    # if winner == 1:
+    #     print("The winner is maxPlayer!!!")
+    # elif winner == -1:
+    #     print("The winner is minPlayer!!!")
+    # else:
+    #     print("Tie. No winner:(")
+    # uttt.printGameBoard()
+
+
+
+        # uttt=ultimateTicTacToe()
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,False)
+    # print("--------------------------------")
+    # print("\tMinimax vs. AlphaBeta")
+    # print("\tMin First")
+    # print("--------------------------------")
+    # print("Expanded Nodes: " + str(expandedNodes))
+    # print("Expanded Nodes: " + str(bestValue))
+    # if winner == 1:
+    #     print("The winner is maxPlayer!!!")
+    # elif winner == -1:
+    #     print("The winner is minPlayer!!!")
+    # else:
+    #     print("Tie. No winner:(")
+    # uttt.printGameBoard()
+
+    # uttt=ultimateTicTacToe()
+    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,True)
+    # print("--------------------------------")
+    # print("\tMinimax vs. Minimax")
+    # print("\tMin First")
+    # print("--------------------------------")
+    # print("Expanded Nodes: " + str(expandedNodes))
+    # print("Expanded Nodes: " + str(bestValue))
+    # if winner == 1:
+    #     print("The winner is maxPlayer!!!")
+    # elif winner == -1:
+    #     print("The winner is minPlayer!!!")
+    # else:
+    #     print("Tie. No winner:(")
+    # uttt.printGameBoard()
