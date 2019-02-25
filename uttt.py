@@ -304,6 +304,7 @@ class ultimateTicTacToe:
                 for j in range(lb[1], lb[1] + 3):
                     # Check its a valid slot
                     if board[i][j] == '_':
+                        self.expandedNodes+=1
                         b = deepcopy(board)
                         b[i][j] = self.maxPlayer if isMax else self.minPlayer
                         temp_nextBoardIdx = self.getNextBoard((i,j), lb)
@@ -337,6 +338,7 @@ class ultimateTicTacToe:
                 for j in range(lb[1], lb[1] + 3):
                     # Check its a valid slot
                     if board[i][j] == '_':
+                        self.expandedNodes+=1
                         b = deepcopy(board)
                         b[i][j] = self.maxPlayer if isMax else self.minPlayer
                         nextBoardIdx = self.getNextBoard((i,j), lb)
@@ -380,18 +382,20 @@ class ultimateTicTacToe:
         bestMove=[]
         bestValue=[]
         gameBoards=[]
+        expandedNodes=[]
         
         nextBoardIdx = self.startBoardIdx
         while self.checkMovesLeft():
             if not self.checkMovesLeft() or self.checkWinner()==1 or self.checkWinner()==-1:
                 break
             if maxFirst:
+                self.expandedNodes = 0
                 lb = self.globalIdx[nextBoardIdx]
                 if isMinimaxOffensive:
                     v = self.minimaxBoard(self.board, 0, nextBoardIdx, True, [], True, True)
                 else:
                     v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, True, [], True, True)
-                    
+                expandedNodes+=[self.expandedNodes]
                 best_move, best_val = v[1][0], v[0]
                 self.board[best_move[0]][best_move[1]] = self.maxPlayer
                 
@@ -401,12 +405,13 @@ class ultimateTicTacToe:
             maxFirst = True
             if not self.checkMovesLeft() or self.checkWinner()==1 or self.checkWinner()==-1:
                 break
+            self.expandedNodes = 0
             lb = self.globalIdx[nextBoardIdx]
             if isMinimaxDefensive:
                 v = self.minimaxBoard(self.board, 0, nextBoardIdx, False, [], True, False)
             else:
                 v = self.alphaBetaBoard(self.board, 0, nextBoardIdx, -sys.maxsize, sys.maxsize, False, [], True, False)
-                
+            expandedNodes+=[self.expandedNodes]    
             best_move, best_val = v[1][0], v[0]
             self.board[best_move[0]][best_move[1]] = self.minPlayer
             
@@ -414,7 +419,7 @@ class ultimateTicTacToe:
             bestMove, bestValue, gameBoards = bestMove+[best_move], bestValue+[best_val], gameBoards+[deepcopy(self.board)]
             
         winner = self.checkWinner()
-        expandedNodes = []
+        
         return gameBoards, bestMove, expandedNodes, bestValue, winner
 
     def playGameYourAgent(self):
@@ -554,70 +559,78 @@ if __name__=="__main__":
 
     ## BLOCK TO TEST playGamePredifinedAgent
     
-    # print("Max Starts First")
-    # uttt=ultimateTicTacToe()    
-    # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,True,True)
-    # end = time.process_time()
-    # uttt.printGameBoard()
-    # print('Minimax-Minimax', end-start)
+    print("Max Starts First")
+    uttt=ultimateTicTacToe()    
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,True,True)
+    end = time.process_time()
+    uttt.printGameBoard()
+    print(expandedNodes, sum(expandedNodes))
+    print('Minimax-Minimax', end-start)
     
-    # uttt=ultimateTicTacToe()
-    # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,False,True)
-    # print(uttt.startBoardIdx)
-    # end = time.process_time()
-    # uttt.printGameBoard()
-    # print('Alphabeta-Minimax', end-start)
+    uttt=ultimateTicTacToe()
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True,False,True)
+    print(uttt.startBoardIdx)
+    end = time.process_time()
+    uttt.printGameBoard()
+    print(expandedNodes, sum(expandedNodes))
+    print('Alphabeta-Minimax', end-start)
     
-    # uttt=ultimateTicTacToe()
-    # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True, True, False)
-    # print(uttt.startBoardIdx)
-    # end = time.process_time()
-    # uttt.printGameBoard()
-    # print('Minimax-Alphabeta', end-start)
+    uttt=ultimateTicTacToe()
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True, True, False)
+    print(uttt.startBoardIdx)
+    end = time.process_time()
+    uttt.printGameBoard()
+    print(expandedNodes, sum(expandedNodes))
+    print('Minimax-Alphabeta', end-start)
     
-    # uttt=ultimateTicTacToe()
-    # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True, False, False)
-    # print(uttt.startBoardIdx)
-    # end = time.process_time()
-    # uttt.printGameBoard()
-    # print('Alphabeta-Alphabeta', end-start)
+    uttt=ultimateTicTacToe()
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(True, False, False)
+    print(uttt.startBoardIdx)
+    end = time.process_time()
+    uttt.printGameBoard()
+    print(expandedNodes, sum(expandedNodes))
+    print('Alphabeta-Alphabeta', end-start)
     
     
-    # print("Min Starts First")
-    # uttt=ultimateTicTacToe()    
-    # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,True)
-    # end = time.process_time()
-    # uttt.printGameBoard()
-    # print('Minimax-Minimax', end-start)
+    print("Min Starts First")
+    uttt=ultimateTicTacToe()    
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,True,True)
+    end = time.process_time()
+    uttt.printGameBoard()
+    print(expandedNodes, sum(expandedNodes))
+    print('Minimax-Minimax', end-start)
     
-    # uttt=ultimateTicTacToe()
-    # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,False,True)
-    # print(uttt.startBoardIdx)
-    # end = time.process_time()
-    # uttt.printGameBoard()
-    # print('Alphabeta-Minimax', end-start)
+    uttt=ultimateTicTacToe()
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False,False,True)
+    print(uttt.startBoardIdx)
+    end = time.process_time()
+    uttt.printGameBoard()
+    print(expandedNodes, sum(expandedNodes))
+    print('Alphabeta-Minimax', end-start)
     
-    # uttt=ultimateTicTacToe()
-    # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, True, False)
-    # print(uttt.startBoardIdx)
-    # end = time.process_time()
-    # uttt.printGameBoard()
-    # print('Minimax-Alphabeta', end-start)
+    uttt=ultimateTicTacToe()
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, True, False)
+    print(uttt.startBoardIdx)
+    end = time.process_time()
+    uttt.printGameBoard()
+    print(expandedNodes, sum(expandedNodes))
+    print('Minimax-Alphabeta', end-start)
     
-    # uttt=ultimateTicTacToe()
-    # start = time.process_time()
-    # gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, False, False)
-    # print(uttt.startBoardIdx)
-    # end = time.process_time()
-    # uttt.printGameBoard()
-    # print('Alphabeta-Alphabeta', end-start)
+    uttt=ultimateTicTacToe()
+    start = time.process_time()
+    gameBoards, bestMove, expandedNodes, bestValue, winner=uttt.playGamePredifinedAgent(False, False, False)
+    print(uttt.startBoardIdx)
+    end = time.process_time()
+    uttt.printGameBoard()
+    print(expandedNodes, sum(expandedNodes))
+    print('Alphabeta-Alphabeta', end-start)
     
     ## BLOCK TO TEST playGameYourAgent
     
