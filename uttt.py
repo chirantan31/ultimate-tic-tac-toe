@@ -236,7 +236,7 @@ class ultimateTicTacToe:
                 if self.axis_min_pot in boardAxis:
                     score += 5 * spaceData[i]
                 if self.axis_max_pot in boardAxis:
-                    score -= 4 * spaceData[i]
+                    score -= 5 * spaceData[i]
                     
             return score
 
@@ -714,15 +714,15 @@ if __name__=="__main__":
     print(f"Defined Agent Win Percentage: {(18.0 - sum)/2.0/18.0*100}%")
     print("--------------------------------")
 
-    # uttt=ultimateTicTacToe()
-    # gameBoards, bestMove, winner = uttt.playGameHuman()
-    # uttt.printGameBoard()
-    # if winner == 1:
-    #     print("You Win!!!")
-    # elif winner == -1:
-    #     print("You Lost!!!")
-    # else:
-    #     print("Tie. No winner:(")
+    uttt=ultimateTicTacToe()
+    gameBoards, bestMove, winner = uttt.playGameHuman()
+    uttt.printGameBoard()
+    if winner == 1:
+        print("You Win!!!")
+    elif winner == -1:
+        print("You Lost!!!")
+    else:
+        print("Tie. No winner:(")
 
 
 
