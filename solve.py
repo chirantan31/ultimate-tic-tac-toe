@@ -78,25 +78,16 @@ def solve(board, pents, app=None):
 
     for i in range(height):
         for j in range(width):
-            print(board[i][j])
             if board[i][j] == 1.0:
-                print('first true')
                 blank_board[i][j] = 0
             else:
-                print('second true')
                 blank_board[i][j] = -1
-                print(blank_board[i][j])
 
     pents_list = []
     for pent in pents:
         pents_list.append(pent.tolist())
 
     figures_dict = generate_dict(pents_list)
-
-    # for fig, figs in figures_dict:
-    #     print(fig)
-
-
     final_shape_dict = {}
     result_board = solution_executor(blank_board, figures_dict, final_shape_dict)
     final_board = np.array(result_board)
@@ -138,7 +129,6 @@ def solution_executor(board, my_dict, final_shape_dict):
             placed_board = place_pent(board, pent, pent_id, final_shape_dict, x=x-pent.offset, y=y)
 
             if placed_board is None:
-                #print('backtracking')
                 continue
             if not forward_check(np.array(placed_board), np.count_nonzero(pent.figure)):
                 continue
@@ -168,7 +158,6 @@ def get_most_constraining(pent_list):
         if cur_zero > most_zeros:
             most_zeros = cur_zero
             most_constraining = pent
-            print('getting')
     return most_constraining
 
 def forward_check(b, spaces):
@@ -228,6 +217,9 @@ def get_next_spot(board):
                 return j, i
 
 def generate_arrangements(shape):
+    """
+    Generates arrangements of the reflections and rotations and adds them to the dict
+    """
     init_figure = Shape(shape)
     result, dicts = [init_figure], [init_figure.dictionary]
 
@@ -255,4 +247,3 @@ def generate_dict(figures_raw_list):
         result[index + 1] = generate_arrangements(figure_raw)
 
     return result
-
