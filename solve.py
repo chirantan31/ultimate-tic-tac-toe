@@ -220,20 +220,20 @@ def generate_arrangements(shape):
     """
     Generates arrangements of the reflections and rotations and adds them to the dict
     """
-    init_figure = Shape(shape)
-    result, dicts = [init_figure], [init_figure.dictionary]
+    pent = Shape(shape)
+    result, dicts = [pent], [pent.dictionary]
 
-    reflect_figure = init_figure.reflection()
-    if reflect_figure.dictionary not in dicts:
-        result.append(reflect_figure)
-        dicts.append(reflect_figure.dictionary)
+    reflected_pent = pent.reflection()
+    if reflected_pent.dictionary not in dicts:
+        result.append(reflected_pent)
+        dicts.append(reflected_pent.dictionary)
 
     for i in range(3):
-        #init_figure
-        init_figure = init_figure.rot90()
-        reflect_figure = reflect_figure.rot90()
+        #pent
+        pent = pent.rot90()
+        reflected_pent = reflected_pent.rot90()
 
-        for figure in [init_figure, reflect_figure]:
+        for figure in [pent, reflected_pent]:
             if figure.dictionary not in dicts:
                 result.append(figure)
                 dicts.append(figure.dictionary)
@@ -242,8 +242,56 @@ def generate_arrangements(shape):
     return result
 
 def generate_dict(figures_raw_list):
-    result = {}
+    result_dict = {}
     for index, figure_raw in enumerate(figures_raw_list):
-        result[index + 1] = generate_arrangements(figure_raw)
+        result_dict[index + 1] = generate_arrangements(figure_raw)
 
-    return result
+    return result_dict
+
+
+"""
+
+code when trying the exactr cover problem
+
+def all_orientations(A, i):
+    if i == 0:
+        yield A
+        return
+        
+    seen = set()
+    for A in (A, A.T):
+        for A in (A, np.fliplr(A)):
+            for A in (A, np.flipud(A)):
+                s = str(A)
+                if not s in seen:
+                    yield A
+                    seen.add(s)
+
+
+def all_positions(A, i):
+    for A in all_orientations(A, i):
+        rows, cols = A.shape
+        for i in range(9 - rows):
+            for j in range(9 - cols):
+                M = np.zeros((8, 8), dtype='int')
+                M[i:i+rows, j:j+cols] = A
+                if M[0,0] == M[0,7] == M[7,0] == M[7,7] == 0:
+                    yield np.delete(M.reshape(64), [0, 7, 56, 63])
+
+def exact_cover(A):
+    if A.shape[1] == 0:
+        yield []                                    
+    else:
+        c = A.sum(axis=0).argmin()
+        for r in A.index[A[c] == 1]:                
+            B = A
+
+            for j in A.columns[A.loc[r] == 1]:
+                B = B[B[j] == 0]
+                del B[j]              
+              
+            for partial_solution in exact_cover(B):
+                yield [r] + partial_solution      
+
+
+"""
